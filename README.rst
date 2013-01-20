@@ -39,13 +39,14 @@ With the class definitions imported, you can unpickle the networks.
 .. code:: python
 
     import networkx as nx
-    net = nx.read_gpickle("sim1025_final.pkl")
+    net = nx.read_gpickle("standard/node_robust/sim1025_final.pkl")
 
 Requirements
 ------------
 
 **Python:**
 
+* some home-cooked `utility functions`__
 * networkx_
 * numpy_
 * scipy.linalg_
@@ -59,6 +60,8 @@ Requirements
 * extraction and storage of network characteristics in HDF5 files pytables_
 * reading HDF5 files in R with rhdf5_
 
+.. _meb: https://github.com/Midnighter/Everyday-Utilities
+__ meb_
 .. _networkx: http://networkx.github.com/
 .. _numpy: http://www.numpy.org/
 .. _scipy.linalg: http://www.scipy.org/
