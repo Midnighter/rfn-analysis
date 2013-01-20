@@ -8,6 +8,35 @@ series of publications by Kaluza *et al*. [1]_, [2]_, [3]_.
 This repository provides a series of Python scripts to extract relevant data and some
 R scripts for their analysis and plotting.
 
+Installation
+------------
+
+Please follow the relevant documentation for the installation of external
+packages.
+
+This package can be installed like any other Python package but if you only use the extract_data.py script, it doesn't have to be.
+
+    sudo python setup.py install
+
+Usage
+-----
+
+If you don't want to make a system-wide installation, you can simply add the
+location of the package to the path variable.
+
+```python
+import sys
+sys.path.append("/home/you/location/rfn-analysis")
+import rfn_analysis as ra
+```
+
+With the class definitions imported, you can unpickle the networks.
+
+```python
+import networkx as nx
+net = nx.read_gpickle("sim1025_final.pkl")
+```
+
 Requirements
 ------------
 
@@ -22,6 +51,7 @@ Requirements
 * ggplot2_
 
 **Optional:**
+
 * extraction and storage of network characteristics in HDF5 files pytables_
 * reading HDF5 files in R with rhdf5_
 
