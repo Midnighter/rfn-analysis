@@ -1,0 +1,42 @@
+=========================
+Analysis of Flow Networks
+=========================
+
+Flow networks robust against damages are simple model networks described in a
+series of publications by Kaluza *et al*. [1]_, [2]_, [3]_.
+
+This repository provides a series of Python scripts to extract relevant data and some
+R scripts for their analysis and plotting.
+
+Requirements
+------------
+
+**Python:**
+
+* networkx_
+* numpy_
+* scipy.linalg_
+
+**R:**
+
+* ggplot2_
+
+**Optional:**
+* extraction and storage of network characteristics in HDF5 files pytables_
+* reading HDF5 files in R with rhdf5_
+
+.. _networkx: http://networkx.github.com/
+.. _numpy: http://www.numpy.org/
+.. _scipy.linalg: http://www.scipy.org/
+.. _ggplot2: http://ggplot2.org/
+.. _pytables: http://www.pytables.org/
+.. _rhdf5: http://www.bioconductor.org/packages/2.12/bioc/html/rhdf5.html
+
+References
+----------
+
+.. [1] Kaluza, P., Ipsen, M., Vingron, M. & Mikhailov, A. S. Design and statistical properties of robust functional networks: A model study of biological signal transduction. Physical Review E 75, 15101 (2007).
+.. [2] Kaluza, P. & Mikhailov, A. S. Evolutionary design of functional networks robust against noise. Europhysics Letters 79, 48001 (2007).
+.. [3] Kaluza, P., Vingron, M. & Mikhailov, A. S. Self-correcting networks: function, robustness, and motif distributions in biological signal processing. Chaos 18, 026113 (2008).
+
+
