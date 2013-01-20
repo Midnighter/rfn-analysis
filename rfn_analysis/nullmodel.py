@@ -30,8 +30,6 @@ import meb.utils.network.subgraphs as net_subs
 
 from meb.utils.mathfuncs import binomial_coefficient
 
-from .classes import ParameterManager
-
 
 class NullModel(nx.DiGraph):
     """
@@ -42,6 +40,7 @@ class NullModel(nx.DiGraph):
         """
         Directed Flow Network Null Model.
         """
+        from .classes import ParameterManager
         nx.DiGraph.__init__(self)
         self.parameters = ParameterManager(nodes_in, nodes_middle, nodes_out)
         self.possible_edges =\

@@ -1,10 +1,14 @@
 # -*- coding: UTF-8 -*-
 
 
-__author__="Moritz Beber"
-__date__ = "2010-09-13"
-__version__ = "0.1"
+import subprocess
 
+def get_version():
+    version = "0.1.dev"
+    version += subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).strip()
+    return version
+
+__version__ = get_version()
 
 from .classes import *
 from .extraction import *
