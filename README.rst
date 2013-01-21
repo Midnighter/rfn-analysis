@@ -20,6 +20,8 @@ packages.
 
 This package can be installed like any other Python package but if you only use the extract_data.py script, it doesn't have to be.
 
+::
+
     sudo python setup.py install
 
 Usage
@@ -44,18 +46,21 @@ With the class definitions imported, you can unpickle the networks.
 Requirements
 ------------
 
-**Python:**
+Python:
+~~~~~~~
 
 * some home-cooked `utility functions`__
 * networkx_
 * numpy_
 * scipy.linalg_
 
-**R:**
+R:
+~~
 
 * ggplot2_
 
-**Optional:**
+Optional:
+~~~~~~~~~
 
 * extraction and storage of network characteristics in HDF5 files pytables_
 * reading HDF5 files in R with rhdf5_
