@@ -113,6 +113,8 @@ def all_simple_data(source, dest, time, setup):
     setup: str
         One of: 'setup' or 'complexity'.
     """
+    if not os.path.exists(source):
+        raise OSError("source directory does not exist")
 
     if time == "flow":
         # networks at threshold
