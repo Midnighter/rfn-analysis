@@ -136,7 +136,8 @@ class RobustFunctionalNetwork(nx.DiGraph):
         self.louvain_modularity = None
         self.louvain_partition = None
         self.degree_correlation = None
-        self.variance = None
+        self.pattern_variance = None
+        self.pattern_rank = None
         self.members = None
         self.middle_members = None
         self.mtf_counts = None
@@ -202,6 +203,7 @@ class RobustFunctionalNetwork(nx.DiGraph):
         self.compute_paths()
         self.compute_overlap()
         self.compute_variance()
+        self.pattern_rank = numpy.linalg.matrix_rank(self.ideal_pattern)
         try:
             self.compute_modularity()
         except nx.NetworkXError:
@@ -406,8 +408,8 @@ class RobustFunctionalNetwork(nx.DiGraph):
         """
         Compute the variance of the output pattern from 1/k.
         """
-        self.variance = numpy.sqrt(numpy.power((1.0 / self.parameters.activated_k) -\
-            self.ideal_pattern[self.ideal_pattern > 0], 2).sum())
+        self.pattern_variance = numpy.sqrt(numpy.power((1.0 / self.parameters.activated_k) -\
+            self.ideal_pattern[self.ideal_pattern > 0], 2.0).sum())
 
     def draw_modules(self, filename, previous=None, spectral_partition=False, louvain_partition=False):
         """

@@ -3,6 +3,19 @@ library(plyr)
 library(ggplot2)
 
 
+# Globals -----------------------------------------------------------------
+
+
+my.setups.brewer <- c("Standard"="#E41A1C",
+                      "4 Input"="#377EB8", "6 Input"="#4DAF4A",
+                      "10 Input"="#984EA3", "12 Input"="#FF7F00",
+                      "2 Activated"="#FFFF33", "6 Activated"="#A65628",
+                      "8 Activated"="#F781BF")
+my.setups.shapes <- c("Standard"=16, "4 Input"=4, "6 Input"=3, "10 Input"=11,
+                      "12 Input"=8, "2 Activated"=15, "6 Activated"=17,
+                      "8 Activated"=12)
+
+
 # Utility Functions -------------------------------------------------------
 
 
@@ -67,14 +80,16 @@ layout_distribution <- function(my.plot,
                                 my.xlab=expression(paste("X label")),
                                 my.ylab=expression(paste("Y label")),
                                 my.legend="Group",
-                                my.a=1, my.l_sz=0.5)
+                                my.a=1,
+                                my.palette=my.setups.brewer,
+                                my.l_sz=0.5)
 {
     my.plot <- my.plot + geom_bar(stat="identity", position="identity",
                                   fill="transparent", alpha=my.a,
                                   show_guide=FALSE)
     my.plot <- my.plot + geom_line(alpha=my.a, size=my.l_sz)
     my.plot <- my.plot + scale_linetype(name=my.legend)
-    my.plot <- my.plot + scale_colour_brewer(name=my.legend, palette=my.brewer)
+    my.plot <- my.plot + scale_colour_manual(name=my.legend, values=my.palette)
     my.plot <- my.plot + scale_x_continuous(name=as.expression(bquote(.(my.xlab))))
     my.plot <- my.plot + scale_y_continuous(name=as.expression(bquote(.(my.ylab))))
     return(my.plot)
@@ -84,27 +99,14 @@ layout_scatter <- function(my.plot,
                            my.xlab=expression(paste("X label")),
                            my.ylab=expression(paste("Y label")),
                            my.legend="Group",
-                           my.a=1, my.p_sz=1)
+                           my.a=1,
+                           my.palette=my.setups.brewer,
+                           my.shapes=my.setups.shapes,
+                           my.p_sz=1)
 {
     my.plot <- my.plot + geom_point(alpha=my.a, size=my.p_sz)
-#     my.plot <- my.plot + scale_shape(name=my.legend)
-    my.plot <- my.plot + scale_colour_brewer(name=my.legend, palette=my.brewer)
-    my.plot <- my.plot + scale_x_continuous(name=as.expression(bquote(.(my.xlab))))
-    my.plot <- my.plot + scale_y_continuous(name=as.expression(bquote(.(my.ylab))))
-    return(my.plot)
-}
-
-layout_scatter_fit <- function(my.plot,
-                           my.xlab=expression(paste("X label")),
-                           my.ylab=expression(paste("Y label")),
-                           my.legend="Group",
-                           my.a=1, my.p_sz=1)
-{
-    my.plot <- my.plot + geom_point(alpha=my.a, size=my.p_sz)
-    my.plot <- my.plot + geom_smooth(method="lm")
-#     my.plot <- my.plot + scale_shape(name=my.legend)
-    my.plot <- my.plot + scale_linetype(name=my.legend)
-    my.plot <- my.plot + scale_colour_brewer(name=my.legend, palette=my.brewer)
+    my.plot <- my.plot + scale_shape_manual(name=my.legend, values=my.shapes)
+    my.plot <- my.plot + scale_colour_manual(name=my.legend, values=my.palette)
     my.plot <- my.plot + scale_x_continuous(name=as.expression(bquote(.(my.xlab))))
     my.plot <- my.plot + scale_y_continuous(name=as.expression(bquote(.(my.ylab))))
     return(my.plot)
@@ -114,16 +116,21 @@ layout_tsp_with_error <- function(my.plot,
                                   my.xlab=expression(paste("Triad")),
                                   my.ylab=expression(paste("Z-Score")),
                                   my.legend="Group",
-                                  my.a=1, my.p_sz=2, my.l_sz=0.5)
+                                  my.a=1,
+                                  my.palette=my.setups.brewer,
+                                  my.shapes=my.setups.shapes,
+                                  my.p_sz=2,
+                                  my.l_sz=0.5)
 {
     my.plot <- my.plot + geom_point(alpha=my.a, size=my.p_sz)
     my.plot <- my.plot + geom_line(alpha=my.a, size=my.l_sz)
     my.plot <- my.plot + geom_errorbar(alpha=my.a, size=my.l_sz, width=0.4,
                                        show_guide=FALSE)
-    my.plot <- my.plot + scale_shape(name=my.legend)
     my.plot <- my.plot + scale_linetype(name=my.legend)
-    my.plot <- my.plot + scale_colour_brewer(name=my.legend, palette=my.brewer)
-    my.plot <- my.plot + scale_x_continuous(name=as.expression(bquote(.(my.xlab))), breaks=1:13)
+    my.plot <- my.plot + scale_shape_manual(name=my.legend, values=my.shapes)
+    my.plot <- my.plot + scale_colour_manual(name=my.legend, values=my.palette)
+    my.plot <- my.plot + scale_x_continuous(
+        name=as.expression(bquote(.(my.xlab))), breaks=1:13)
     return(my.plot)
 }
 
@@ -289,7 +296,7 @@ plot_tsps_no_error <- function(my.df, my.legend, a=1)
 # Distributions of Single Attributes --------------------------------------
 
 
-plot_flow_error <- function(my.df, my.legend, binw=10^-4, my.a=1, lim=0.0075, thresh=0.007)
+plot_flow_error <- function(my.df, my.legend, my.palette, binw=10^-4, my.a=1, lim=0.0075, thresh=0.007)
 {
     cat("flow error\n")
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -301,7 +308,7 @@ plot_flow_error <- function(my.df, my.legend, binw=10^-4, my.a=1, lim=0.0075, th
     my.plot <- layout_distribution(my.plot,
                                    expression(paste("Flow Error ", epsilon)),
                                    expression(paste(PMF(epsilon))),
-                                   my.legend, my.a)
+                                   my.legend, my.a, my.palette)
     my.plot <- my.plot + facet_grid("type ~ .")
     my.plot <- my.plot + coord_cartesian(xlim=c(0, lim))
     # mark threshold in plot
@@ -315,7 +322,7 @@ plot_flow_error <- function(my.df, my.legend, binw=10^-4, my.a=1, lim=0.0075, th
     return(my.plot)
 }
 
-plot_robustness <- function(my.df, my.legend, binw=0.01, my.a=1)
+plot_robustness <- function(my.df, my.legend, my.palette, binw=0.01, my.a=1)
 {
     cat("robustness\n")
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -323,13 +330,14 @@ plot_robustness <- function(my.df, my.legend, binw=0.01, my.a=1)
     tmp <- probability_distributions(my.df, c("setup", "type"), "robustness", binw)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
     my.plot <- layout_distribution(my.plot, expression(paste("Robustness ", rho)),
-                                 expression(paste(PMF(rho))), my.legend, my.a)
+                                   expression(paste(PMF(rho))), my.legend, my.a,
+                                   my.palette)
 #    my.plot <- my.plot + coord_cartesian(xlim=c(0, 1))
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_overlap <- function(my.df, my.legend, binw=0.01, my.a=1)
+plot_overlap <- function(my.df, my.legend, my.palette, binw=0.01, my.a=1)
 {
     cat("overlap\n")
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -337,13 +345,13 @@ plot_overlap <- function(my.df, my.legend, binw=0.01, my.a=1)
     tmp <- probability_distributions(my.df, c("setup", "type"), "mean_overlap", binw)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
     my.plot <- layout_distribution(my.plot, expression(paste("Overlap ", O)),
-                                   expression(paste(PMF(O))), my.legend, my.a)
+                                   expression(paste(PMF(O))), my.legend, my.a, my.palette)
     my.plot <- my.plot + facet_grid("type ~ .")
 #     my.plot <- my.plot + coord_cartesian(xlim=c(0, 1))
     return(my.plot)
 }
 
-plot_variance <- function(my.df, my.legend, binw=0.01, my.a=1)
+plot_variance <- function(my.df, my.legend, my.palette, binw=0.01, my.a=1)
 {
     cat("variance\n")
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -351,12 +359,12 @@ plot_variance <- function(my.df, my.legend, binw=0.01, my.a=1)
     tmp <- probability_distributions(my.df, c("setup", "type"), "variance", binw)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
     my.plot <- layout_distribution(my.plot, expression(paste("Pattern Variance ", sigma^2)),
-                                 expression(paste(PMF(sigma^2))), my.legend, my.a)
+                                 expression(paste(PMF(sigma^2))), my.legend, my.a, my.palette)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_scalar_complexity <- function(my.df, my.legend, binw=0.005, my.a=1)
+plot_scalar_complexity <- function(my.df, my.legend, my.palette, binw=0.005, my.a=1)
 {
     cat("scalar complexity\n")
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -364,12 +372,12 @@ plot_scalar_complexity <- function(my.df, my.legend, binw=0.005, my.a=1)
     tmp <- probability_distributions(my.df, c("setup", "type"), "scalar_complexity", binw)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
     my.plot <- layout_distribution(my.plot, expression(paste("Scalar Complexity ", italic(C))),
-                                 expression(paste(PMF(italic(C)))), my.legend, my.a)
+                                 expression(paste(PMF(italic(C)))), my.legend, my.a, my.palette)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_binary_complexity <- function(my.df, my.legend, binw=0.05, my.a=1)
+plot_binary_complexity <- function(my.df, my.legend, my.palette, binw=0.05, my.a=1)
 {
     cat("binary complexity\n")
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -377,12 +385,12 @@ plot_binary_complexity <- function(my.df, my.legend, binw=0.05, my.a=1)
     tmp <- probability_distributions(my.df, c("setup", "type"), "binary_complexity", binw)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
     my.plot <- layout_distribution(my.plot, expression(paste("Binary Complexity ", italic(C[b]))),
-                                 expression(paste(PMF(italic(C[b])))), my.legend, my.a)
+                                 expression(paste(PMF(italic(C[b])))), my.legend, my.a, my.palette)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_iteration <- function(my.df, my.legend, binw=10, my.a=1, lim=10^4)
+plot_iteration <- function(my.df, my.legend, my.palette, binw=10, my.a=1, lim=10^4)
 {
     cat("iteration\n")
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -391,13 +399,13 @@ plot_iteration <- function(my.df, my.legend, binw=10, my.a=1, lim=10^4)
     tmp <- probability_distributions(my.df, c("setup", "type"), "iteration", binw)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
     my.plot <- layout_distribution(my.plot, expression(paste("Iteration ", italic(i))),
-                                 expression(paste(PMF(italic(i)))), my.legend, my.a)
+                                 expression(paste(PMF(italic(i)))), my.legend, my.a, my.palette)
     my.plot <- my.plot + coord_cartesian(xlim=c(0, lim))
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_connectivity <- function(my.df, my.legend, binw=0.001, my.a=1)
+plot_connectivity <- function(my.df, my.legend, my.palette, binw=0.001, my.a=1)
 {
     cat("connectivity\n")
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -405,13 +413,13 @@ plot_connectivity <- function(my.df, my.legend, binw=0.001, my.a=1)
     tmp <- probability_distributions(my.df, c("setup", "type"), "density", binw)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
     my.plot <- layout_distribution(my.plot, expression(paste("Connectivity ", gamma)),
-                                 expression(paste(PMF(gamma))), my.legend, my.a)
+                                 expression(paste(PMF(gamma))), my.legend, my.a, my.palette)
 #    my.plot <- my.plot + coord_cartesian(xlim=c(0, 1))
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_initial_connectivity <- function(my.df, my.legend, binw=0.01, my.a=1)
+plot_initial_connectivity <- function(my.df, my.legend, my.palette, binw=0.01, my.a=1)
 {
     cat("initial connectivity\n")
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -421,13 +429,13 @@ plot_initial_connectivity <- function(my.df, my.legend, binw=0.01, my.a=1)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
     my.plot <- layout_distribution(my.plot,
                                    expression(paste("Initial Connectivity ", gamma[init])),
-                                   expression(paste(PMF(gamma[init]))), my.legend, my.a)
+                                   expression(paste(PMF(gamma[init]))), my.legend, my.a, my.palette)
 #    my.plot <- my.plot + coord_cartesian(xlim=c(0, 1))
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_spectral_modularity <- function(my.df, my.legend, binw=0.01, my.a=1)
+plot_spectral_modularity <- function(my.df, my.legend, my.palette, binw=0.01, my.a=1)
 {
     cat("spectral modularity\n")
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -437,12 +445,12 @@ plot_spectral_modularity <- function(my.df, my.legend, binw=0.01, my.a=1)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
     my.plot <- layout_distribution(my.plot,
                                    expression(paste("Modularity ", italic(Q))),
-                                   expression(paste(PMF(italic(Q)))), my.legend, my.a)
+                                   expression(paste(PMF(italic(Q)))), my.legend, my.a, my.palette)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_louvain_modularity <- function(my.df, my.legend, binw=0.01, my.a=1)
+plot_louvain_modularity <- function(my.df, my.legend, my.palette, binw=0.01, my.a=1)
 {
     cat("louvain modularity\n")
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -452,12 +460,12 @@ plot_louvain_modularity <- function(my.df, my.legend, binw=0.01, my.a=1)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
     my.plot <- layout_distribution(my.plot,
                                    expression(paste("Modularity ", italic(Q))),
-                                   expression(paste(PMF(italic(Q)))), my.legend, my.a)
+                                   expression(paste(PMF(italic(Q)))), my.legend, my.a, my.palette)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_degree_correlation <- function(my.df, my.legend, binw=0.01, my.a=1)
+plot_degree_correlation <- function(my.df, my.legend, my.palette, binw=0.01, my.a=1)
 {
     cat("degree correlation\n")
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -466,13 +474,13 @@ plot_degree_correlation <- function(my.df, my.legend, binw=0.01, my.a=1)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
     my.plot <- layout_distribution(my.plot,
                                    expression(paste("Degree Correlation ", italic(r))),
-                                   expression(paste(PMF(italic(r)))), my.legend, my.a)
+                                   expression(paste(PMF(italic(r)))), my.legend, my.a, my.palette)
 #    my.plot <- my.plot + coord_cartesian(xlim=c(-1, 1))
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_average_shortest_path <- function(my.df, my.legend, binw=0.01, my.a=1)
+plot_average_shortest_path <- function(my.df, my.legend, my.palette, binw=0.01, my.a=1)
 {
     cat("shortest path\n")
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -481,12 +489,12 @@ plot_average_shortest_path <- function(my.df, my.legend, binw=0.01, my.a=1)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
     my.plot <- layout_distribution(my.plot,
                                    expression(paste("Average Shortest Path ", italic(p))),
-                                   expression(paste(PMF(italic(p)))), my.legend, my.a)
+                                   expression(paste(PMF(italic(p)))), my.legend, my.a, my.palette)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_zscore <- function(my.df, my.legend, mtf, label, binw=0.2, my.a=1)
+plot_zscore <- function(my.df, my.legend, mtf, label, my.palette, binw=0.2, my.a=1)
 {
     cat(paste(bquote(.(mtf)), "\n"))
     cat(paste("\tbinwidth =", binw, "\n"))
@@ -495,7 +503,7 @@ plot_zscore <- function(my.df, my.legend, mtf, label, binw=0.2, my.a=1)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
     my.plot <- layout_distribution(my.plot, label,
                                    as.expression(bquote(PMF(.(label)))),
-                                   my.legend, my.a)
+                                   my.legend, my.a, my.palette)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
@@ -504,21 +512,21 @@ plot_zscore <- function(my.df, my.legend, mtf, label, binw=0.2, my.a=1)
 # Scatter Plots -----------------------------------------------------------
 
 
-plot_comparison <- function(my.df, my.attr, my.legend, my.a=1, axis.sz=6)
+plot_comparison <- function(my.df, my.attr, my.legend, my.palette, my.shapes, my.a=1, axis.sz=6)
 {
     cat("plotting comparison\n")
     cat(paste("\talpha =", my.a, "\n"))
     my.plot <- ggplot(my.df, aes(x=phase_1, y=phase_2, colour=setup))
     my.plot <- layout_scatter(my.plot, paste(my.attr, "Phase I"),
                               paste(my.attr, "Phase II"),
-                              my.legend, my.a)
+                              my.legend, my.a, my.palette, my.shapes)
     my.plot <- my.plot + geom_abline(intercept=0, slope=1, colour="red",
                                      show_guide=FALSE)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_variance_vs_connectivity <- function(my.df, my.legend, my.a=1)
+plot_variance_vs_connectivity <- function(my.df, my.legend, my.palette, my.shapes, my.a=1)
 {
     cat("variance vs density\n")
     cat(paste("\talpha =", my.a, "\n"))
@@ -527,12 +535,12 @@ plot_variance_vs_connectivity <- function(my.df, my.legend, my.a=1)
     my.plot <- layout_scatter(my.plot,
                               expression(paste("Pattern Variance ", sigma^2)),
                               expression(paste("Connectivity ", gamma)),
-                              my.legend, my.a)
+                              my.legend, my.a, my.palette, my.shapes)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_binary_vs_overlap <- function(my.df, my.legend, my.a=1)
+plot_binary_vs_overlap <- function(my.df, my.legend, my.palette, my.shapes, my.a=1)
 {
     cat("binary vs overlap\n")
     cat(paste("\talpha =", my.a, "\n"))
@@ -540,12 +548,12 @@ plot_binary_vs_overlap <- function(my.df, my.legend, my.a=1)
     my.plot <- layout_scatter(my.plot,
                               expression(paste("Binary Complexity ", italic(C[b]))),
                               expression(paste("Overlap ", italic(O))),
-                              my.legend, my.a)
+                              my.legend, my.a, my.palette, my.shapes)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_binary_vs_spectral <- function(my.df, my.legend, my.a=1)
+plot_binary_vs_spectral <- function(my.df, my.legend, my.palette, my.shapes, my.a=1)
 {
     cat("complexity vs modularity\n")
     cat(paste("\talpha =", my.a, "\n"))
@@ -554,12 +562,12 @@ plot_binary_vs_spectral <- function(my.df, my.legend, my.a=1)
     my.plot <- layout_scatter(my.plot,
                               expression(paste("Binary Complexity ", italic(C[b]))),
                               expression(paste("Modularity ", italic(Q))),
-                              my.legend, my.a)
+                              my.legend, my.a, my.palette, my.shapes)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_scalar_vs_overlap <- function(my.df, my.legend, my.a=1)
+plot_scalar_vs_overlap <- function(my.df, my.legend, my.palette, my.shapes, my.a=1)
 {
     cat("scalar vs overlap\n")
     cat(paste("\talpha =", my.a, "\n"))
@@ -568,26 +576,26 @@ plot_scalar_vs_overlap <- function(my.df, my.legend, my.a=1)
     my.plot <- layout_scatter(my.plot,
                               expression(paste("Scalar Complexity ", italic(C))),
                               expression(paste("Overlap ", italic(O))),
-                              my.legend, my.a)
+                              my.legend, my.a, my.palette, my.shapes)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_scalar_vs_spectral <- function(my.df, my.legend, my.a=1)
+plot_scalar_vs_spectral <- function(my.df, my.legend, my.palette, my.shapes, my.a=1, my.p_sz=1.5)
 {
     cat("scalar vs modularity\n")
     cat(paste("\talpha =", my.a, "\n"))
     my.plot <- ggplot(my.df, aes(x=scalar_complexity, y=spectral_modularity,
-                                 colour=setup, linetype=setup))
+                                     colour=setup, linetype=setup, shape=setup))
     my.plot <- layout_scatter(my.plot,
                               expression(paste("Scalar Complexity ", italic(C))),
                               expression(paste("Modularity ", italic(Q))),
-                              my.legend, my.a)
+                              my.legend, my.a, my.palette, my.shapes, my.p_sz=my.p_sz)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_scalar_vs_degree_corr <- function(my.df, my.legend, my.a=1)
+plot_scalar_vs_degree_corr <- function(my.df, my.legend, my.palette, my.shapes, my.a=1)
 {
     cat("scalar vs degree correlation\n")
     cat(paste("\talpha =", my.a, "\n"))
@@ -596,12 +604,12 @@ plot_scalar_vs_degree_corr <- function(my.df, my.legend, my.a=1)
     my.plot <- layout_scatter(my.plot,
                               expression(paste("Scalar Complexity ", italic(C))),
                               expression(paste("Degree Correlation ", italic(r))),
-                              my.legend, my.a)
+                              my.legend, my.a, my.palette, my.shapes)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_scalar_vs_zscore <- function(my.df, my.legend, mtf, label, my.a=1)
+plot_scalar_vs_zscore <- function(my.df, my.legend, mtf, label, my.palette, my.shapes, my.a=1)
 {
     cat(paste("scalar vs", mtf, "\n"))
     cat(paste("\talpha =", my.a, "\n"))
@@ -610,12 +618,12 @@ plot_scalar_vs_zscore <- function(my.df, my.legend, mtf, label, my.a=1)
     my.plot <- layout_scatter(my.plot,
                               label,
                               expression(paste("Scalar Complexity ", italic(C))),
-                              my.legend, my.a)
+                              my.legend, my.a, my.palette, my.shapes)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_spectral_vs_zscore <- function(my.df, my.legend, mtf, label, my.a=1)
+plot_spectral_vs_zscore <- function(my.df, my.legend, mtf, label, my.palette, my.shapes, my.a=1)
 {
     cat(paste("modularity vs", mtf, "\n"))
     cat(paste("\talpha =", my.a, "\n"))
@@ -624,12 +632,12 @@ plot_spectral_vs_zscore <- function(my.df, my.legend, mtf, label, my.a=1)
     my.plot <- layout_scatter(my.plot,
                               label,
                               expression(paste("Modularity ", italic(Q))),
-                              my.legend, my.a)
+                              my.legend, my.a, my.palette, my.shapes)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_spectral_vs_overlap <- function(my.df, my.legend, my.a=1)
+plot_spectral_vs_overlap <- function(my.df, my.legend, my.palette, my.shapes, my.a=1)
 {
     cat("modularity vs overlap\n")
     cat(paste("\talpha =", my.a, "\n"))
@@ -638,12 +646,12 @@ plot_spectral_vs_overlap <- function(my.df, my.legend, my.a=1)
     my.plot <- layout_scatter(my.plot,
                               expression(paste("Modularity ", italic(Q))),
                               expression(paste("Overlap ", italic(O))),
-                              my.legend, my.a)
+                              my.legend, my.a, my.palette, my.shapes)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
 
-plot_spectral_vs_degree_corr <- function(my.df, my.legend, my.a=1)
+plot_spectral_vs_degree_corr <- function(my.df, my.legend, my.palette, my.shapes, my.a=1)
 {
     cat("modularity vs degree correlation\n")
     cat(paste("\talpha =", my.a, "\n"))
@@ -652,7 +660,7 @@ plot_spectral_vs_degree_corr <- function(my.df, my.legend, my.a=1)
     my.plot <- layout_scatter(my.plot,
                               expression(paste("Modularity ", italic(Q))),
                               expression(paste("Degree Correlation ", italic(r))),
-                              my.legend, my.a)
+                              my.legend, my.a, my.palette, my.shapes)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
@@ -743,8 +751,28 @@ shifts <- function(my.df, my.var)
 }
 
 
-# Additional Plots --------------------------------------------------------
+# Publication Plots ------------------------------------------------------------
 
+
+plot_publication <- function(my.path, my.write=write_epjb_figure)
+{
+    my.df <- my.setups.p2[my.setups.p2$robustness > 0.6,]
+#     my.df <- subset(my.setups.p2, setup %in% c("6 Activated", "Standard",
+#             "2 Activated", "4 Input", "12 Input"))
+    tmp <- subset(my.df, setup %in% c("6 Activated", "Standard", "2 Activated"))
+    tmp$setup <- factor(tmp$setup)
+    tmp$setup <- factor(tmp$setup, levels=c("Standard", "2 Activated", "6 Activated"))
+    my.palette <- my.setups.brewer
+    my.shapes <- my.setups.shapes
+    my.legend <- "Parameter Setup"
+    my.title <- "Parameter Setup, Phase II,"
+    # 
+    my.plot <- plot_scalar_vs_spectral(tmp, my.legend, my.palette, my.shapes, my.p_sz=3)
+    my.plot <- my.plot + geom_smooth(method="lm") + scale_linetype(name=my.legend)
+    print(my.plot)
+#     my.write(my.plot, file.path(my.dest, "scalar_vs_spectral"),
+#              paste(my.title, "Scalar Complexity vs Modularity", tall=TRUE))
+}
 
 plot_figure_overlap <- function(my.legend="Setup", my.a=1)
 {
@@ -772,18 +800,6 @@ plot_figure_overlap <- function(my.legend="Setup", my.a=1)
                                                  linetype=type), method="lm")
     my.plot <- my.plot + scale_linetype(name="Type")
     my.plot
-}
-
-plot_publication <- function(my.dest="../Figures/setups/final", my.a=1)
-{
-    my.plot <- plot_overlap_modularity_boundaries(my.a=my.a)
-    my.file <- file.path(my.dest, "modularity_vs_overlap_boundaries.pdf")
-    my.title <- paste("Parameter Setups", "Phase II",
-                      "(directed) Modularity vs Overlap", sep=", ")
-    pdf(my.file, title=my.title)
-    cat(my.plot)
-    dev.off()
-    cat(my.file)
 }
     
 plot_additional <- function()

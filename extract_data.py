@@ -57,7 +57,8 @@ class NetworkStats(tables.IsDescription):
     louvain_modularity   = tables.Float64Col()
     degree_correlation   = tables.Float64Col()
     mean_overlap         = tables.Float64Col()
-    variance             = tables.Float64Col()
+    pattern_variance     = tables.Float64Col()
+    pattern_rank         = tables.Float64Col()
     shortest_paths       = tables.Float64Col()
     name                 = tables.StringCol(22)
     type                 = tables.StringCol(12)
@@ -129,7 +130,7 @@ def all_simple_data(source, dest, time, setup):
     attr = ("flow_error", "robustness", "scalar_complexity",
             "binary_complexity", "iteration", "density","initial_connectivity",
             "spectral_modularity", "louvain_modularity", "degree_correlation",
-            "mean_overlap", "variance")
+            "mean_overlap", "pattern_variance", "pattern_rank")
 
     header = ["mtf_%d" % i for i in range(1, 14)]
     header.extend(list(attr))

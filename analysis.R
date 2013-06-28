@@ -69,7 +69,7 @@ load_setups <- function(my.path)
     return()
 }
 
-load_complexity <- function(my.path)
+load_artificial <- function(my.path)
 {
     my.h5 <- H5Fopen(my.path)
     # phase 1 complexity data
@@ -99,14 +99,20 @@ load_all <- function(my.path)
 # Group Prediction --------------------------------------------------------
 
 
+linear_model <- function(my.df, my.formula)
+{
+    my.mod <- lm(my.formula, data=my.df)
+#     modularity <- effect("scalar_complexity", my.mod)
+#     return(modularity)
+    return(my.mod)
+}
+
 coefficient_agreement <- function(my.ct)
 {
     my.N <- sum(my.ct)
     my.p0 <- sum(diag(my.ct))
     my.rsums <- margin.table(my.ct, 1)
     my.csums <- margin.table(my.ct, 2)
-    cat(paste("margin 1 = ", my.rsums, "\n"))
-    cat(paste("margin 2 = ", my.csums, "\n"))
     my.pc <- sum(my.rsums * my.csums) / my.N
     my.min.marg <- numeric(length(my.rsums))
     for (j in 1:length(my.min.marg)) {

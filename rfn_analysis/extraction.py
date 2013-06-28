@@ -78,6 +78,7 @@ def extract_all((networks, net_type, setup, args)):
             print "failed to load network file '%s'" % filename
             os.rename(filename, filename + ".failed")
             continue
+#        update(net, filename)
         results = list(z_getter(net))
         results.extend(list(getter(net)))
         results.append(numpy.mean(net.shortest_paths))
@@ -87,4 +88,11 @@ def extract_all((networks, net_type, setup, args)):
         results.append(setup)
         res.append(results)
     return res
+
+def update(network, filename):
+    del network.variance
+    network.compute_complexity()
+    network.compute_variance()
+    network.pattern_rank = numpy.linalg.matrix_rank(network.ideal_pattern)
+    nx.write_gpickle(network, filename)
 
