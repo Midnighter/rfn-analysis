@@ -21,6 +21,7 @@ Gather Simulation Data for analysis and plotting
 """
 
 
+import sys
 import os
 import re
 import multiprocessing
@@ -83,20 +84,34 @@ def extract_1d(base, file_pattern, net_stats, setup, header, *attr):
     *attr:
         Any attributes that should be extracted from the networks.
     """
+    sys.stdout.write(base)
+    sys.stdout.write("\n")
+    sys.stdout.flush()
+    sys.stdout.write("\r{0:.2%}".format(0.0))
+    sys.stdout.flush()
     pool = multiprocessing.Pool(3)
     arguments = list()
     files = ra.find_files(os.path.join(base, "link_robust"), file_pattern)
     arguments.append((files, "Link Robust", setup, attr))
+    total = float(len(files))
     files = ra.find_files(os.path.join(base, "node_robust"), file_pattern)
     arguments.append((files, "Node Robust", setup, attr))
+    total += float(len(files))
     files = ra.find_files(os.path.join(base, "noise_robust"), file_pattern)
+    total += float(len(files))
     arguments.append((files, "Noise Robust", setup, attr))
     results = pool.map(ra.extract_all, arguments)
+    t = 1
     for res in results:
         for stats in res:
             for (i, name) in enumerate(header):
                 net_stats[name] = stats[i]
             net_stats.append()
+            sys.stdout.write("\r{0:.2%}".format(t / total))
+            sys.stdout.flush()
+            t += 1
+    sys.stdout.write("\r{0:.2%}\n".format(1.0))
+    sys.stdout.flush()
 
 def all_simple_data(source, dest, time, setup):
     """
