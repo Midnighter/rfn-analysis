@@ -147,7 +147,7 @@ def all_simple_data(source, dest, time, setup):
     attr = ("flow_error", "robustness", "scalar_complexity",
             "binary_complexity", "iteration", "density","initial_connectivity",
             "spectral_modularity", "louvain_modularity", "degree_correlation",
-            "mean_overlap", "pattern_variance", "pattern_rank")
+            "mean_overlap", "pattern_variance", "pattern_rank", "binary_rank")
 
     header = ["mtf_%d" % i for i in range(1, 14)]
     header.extend(list(attr))
