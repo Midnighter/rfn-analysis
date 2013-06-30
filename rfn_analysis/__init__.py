@@ -1,14 +1,24 @@
 # -*- coding: UTF-8 -*-
 
 
-import subprocess
+"""
+==================================
+Robust Functional Network Analysis
+==================================
 
-def get_version():
-    version = "0.1.dev"
-    version += subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).strip()
-    return version
+:Author:
+    Moritz Emanuel Beber
+:Date:
+    2010-09-13
+:Copyright:
+    Copyright |c| 2010 Jacobs University Bremen gGmbH, all rights reserved.
+:File:
+    classes.py
 
-__version__ = get_version()
+
+.. |c| unicode:: U+A9
+"""
+
 
 from .classes import *
 from .extraction import *

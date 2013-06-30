@@ -138,6 +138,7 @@ class RobustFunctionalNetwork(nx.DiGraph):
         self.degree_correlation = None
         self.pattern_variance = None
         self.pattern_rank = None
+        self.binary_rank = None
         self.members = None
         self.middle_members = None
         self.mtf_counts = None
@@ -204,6 +205,7 @@ class RobustFunctionalNetwork(nx.DiGraph):
         self.compute_overlap()
         self.compute_variance()
         self.pattern_rank = numpy.linalg.matrix_rank(self.ideal_pattern)
+        self.binary_rank = numpy.linalg.matrix_rank(self.ideal_pattern > 0)
         try:
             self.compute_modularity()
         except nx.NetworkXError:
@@ -406,9 +408,10 @@ class RobustFunctionalNetwork(nx.DiGraph):
 
     def compute_variance(self):
         """
-        Compute the variance of the output pattern from 1/k.
+        Compute the variance of the non-zero output pattern from 1/k.
         """
-        self.pattern_variance = numpy.sqrt(numpy.power((1.0 / self.parameters.activated_k) -\
+        self.pattern_variance = numpy.sqrt(numpy.power(
+            numpy.reciprocal(self.parameters.activated_k) -\
             self.ideal_pattern[self.ideal_pattern > 0], 2.0).sum())
 
     def draw_modules(self, filename, previous=None, spectral_partition=False, louvain_partition=False):
@@ -458,13 +461,13 @@ class RobustFunctionalNetwork(nx.DiGraph):
                 colour = colour_vec[self.louvain_partition[node]]
             if self.parameters.is_input(node):
                 label = "I %d" % node
-                shape = "diamond"
+                shape = "invtriangle"
             elif self.parameters.is_middle(node):
                 label = "M %d" % node
-                shape = "ellipse"
+                shape = "circle"
             else:
                 label = "O %d" % node
-                shape = "house"
+                shape = "triangle"
             if spectral_partition or louvain_partition:
                 net.add_node(node, label=label, fillcolor=colour, shape=shape, **node_attr)
             else:
@@ -511,12 +514,12 @@ class RobustFunctionalNetwork(nx.DiGraph):
                 input_layer.append(node)
             elif self.parameters.is_middle(node):
                 label = "M %d" % node
-                shape = "ellipse"
+                shape = "circle"
                 colour = colour_vec[1]
                 middle_layer.append(node)
             else:
                 label = "O %d" % node
-                shape = "house"
+                shape = "triangle"
                 colour = colour_vec[2]
                 output_layer.append(node)
 #            net.add_node(node, label=label, fillcolor=colour, shape=shape, **node_attr)

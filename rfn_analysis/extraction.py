@@ -90,9 +90,6 @@ def extract_all((networks, net_type, setup, args)):
     return res
 
 def update(network, filename):
-    del network.variance
-    network.compute_complexity()
-    network.compute_variance()
-    network.pattern_rank = numpy.linalg.matrix_rank(network.ideal_pattern)
+    network.binary_rank = numpy.linalg.matrix_rank(network.ideal_pattern > 0)
     nx.write_gpickle(network, filename)
 

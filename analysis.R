@@ -101,10 +101,15 @@ load_all <- function(my.path)
 
 linear_model <- function(my.df, my.formula)
 {
+    cat(paste("\n", unique(my.df$type), "\n"))
+    cat(paste(unique(my.df$setup), "\n", "\n"))
     my.mod <- lm(my.formula, data=my.df)
-#     modularity <- effect("scalar_complexity", my.mod)
-#     return(modularity)
-    return(my.mod)
+    print(summary(my.mod))
+    par(mfrow=c(2, 2))
+    plot(my.mod)
+    par(mfrow=c(1, 1))
+    return(data.frame(mod=my.mod, setup=unique(my.df$setup),
+                      type=unique(my.df$type)))
 }
 
 coefficient_agreement <- function(my.ct)
