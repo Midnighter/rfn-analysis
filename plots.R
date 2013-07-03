@@ -11,9 +11,12 @@ my.setups.brewer <- c("Standard"="#E41A1C",
                       "10 Input"="#984EA3", "12 Input"="#FF7F00",
                       "2 Activated"="#FFFF33", "6 Activated"="#A65628",
                       "8 Activated"="#F781BF")
+my.complexity.brewer <- c("2.2"="#E41A1C", "4.0"="#377EB8", "9.3"="#4DAF4A",
+                          "12.9"="#984EA3")
 my.setups.shapes <- c("Standard"=16, "4 Input"=4, "6 Input"=3, "10 Input"=11,
                       "12 Input"=8, "2 Activated"=15, "6 Activated"=17,
                       "8 Activated"=12)
+my.complexity.shapes <- c("2.2"=16, "4.0"=15, "9.3"=17, "12.9"=18)
 
 
 # Utility Functions -------------------------------------------------------
@@ -92,6 +95,8 @@ layout_distribution <- function(my.plot,
     my.plot <- my.plot + scale_colour_manual(name=my.legend, values=my.palette)
     my.plot <- my.plot + scale_x_continuous(name=as.expression(bquote(.(my.xlab))))
     my.plot <- my.plot + scale_y_continuous(name=as.expression(bquote(.(my.ylab))))
+    # prevent alpha values in the plot from reducing visibility of the legend
+    my.plot <- my.plot + guides(colour=guide_legend(override.aes=list(alpha=1)))
     return(my.plot)
 }
 
@@ -109,6 +114,8 @@ layout_scatter <- function(my.plot,
     my.plot <- my.plot + scale_colour_manual(name=my.legend, values=my.palette)
     my.plot <- my.plot + scale_x_continuous(name=as.expression(bquote(.(my.xlab))))
     my.plot <- my.plot + scale_y_continuous(name=as.expression(bquote(.(my.ylab))))
+    # prevent alpha values in the plot from reducing visibility of the legend
+    my.plot <- my.plot + guides(colour=guide_legend(override.aes=list(alpha=1)))
     return(my.plot)
 }
 
@@ -131,6 +138,8 @@ layout_tsp_with_error <- function(my.plot,
     my.plot <- my.plot + scale_colour_manual(name=my.legend, values=my.palette)
     my.plot <- my.plot + scale_x_continuous(
         name=as.expression(bquote(.(my.xlab))), breaks=1:13)
+    # prevent alpha values in the plot from reducing visibility of the legend
+    my.plot <- my.plot + guides(colour=guide_legend(override.aes=list(alpha=1)))
     return(my.plot)
 }
 
@@ -138,108 +147,142 @@ layout_tsp_with_error <- function(my.plot,
 # Plotting ----------------------------------------------------------------
 
 
-plot_all <- function(my.df, my.dest, my.title, my.legend, my.write=write_normal)
+plot_all <- function(my.df, my.dest, my.title, my.legend, my.palette, my.shapes,
+                     my.write=write_normal)
 {
     # distributions
-    my.plot <- plot_flow_error(my.df, my.legend)
+    my.plot <- plot_flow_error(my.df, my.legend, my.palette)
     my.write(my.plot, file.path(my.dest, "flow_error"),
-             paste(my.title, "Flow Error", tall=TRUE))
+             paste(my.title, "Flow Error"), tall=TRUE)
 
-    my.plot <- plot_robustness(my.df, my.legend)
+    my.plot <- plot_robustness(my.df, my.legend, my.palette)
     my.write(my.plot, file.path(my.dest, "robustness"),
-             paste(my.title, "Robustness", tall=TRUE))
+             paste(my.title, "Robustness"), tall=TRUE)
 
-    my.plot <- plot_overlap(my.df, my.legend)
+    my.plot <- plot_overlap(my.df, my.legend, my.palette)
     my.write(my.plot, file.path(my.dest, "overlap"),
-             paste(my.title, "Overlap", tall=TRUE))
+             paste(my.title, "Overlap"), tall=TRUE)
 
-    my.plot <- plot_variance(my.df, my.legend)
+    my.plot <- plot_variance(my.df, my.legend, my.palette)
     my.write(my.plot, file.path(my.dest, "pattern_variance"),
-             paste(my.title, "Pattern Variance", tall=TRUE))
+             paste(my.title, "Pattern Variance"), tall=TRUE)
 
-    my.plot <- plot_scalar_complexity(my.df, my.legend)
+    my.plot <- plot_scalar_complexity(my.df, my.legend, my.palette)
     my.write(my.plot, file.path(my.dest, "scalar_complexity"),
-             paste(my.title, "Scalar Complexity", tall=TRUE))
+             paste(my.title, "Scalar Complexity"), tall=TRUE)
 
-    my.plot <- plot_binary_complexity(my.df, my.legend)
+    my.plot <- plot_binary_complexity(my.df, my.legend, my.palette)
     my.write(my.plot, file.path(my.dest, "binary_complexity"),
-             paste(my.title, "Binary Complexity", tall=TRUE))
+             paste(my.title, "Binary Complexity"), tall=TRUE)
+    
+    my.plot <- plot_variance(my.df, my.legend, my.palette)
+    my.write(my.plot, file.path(my.dest, "pattern_variance"),
+             paste(my.title, "Pattern Variance"), tall=TRUE)
 
-    my.plot <- plot_iteration(my.df, my.legend)
+    my.plot <- plot_binary_rank(my.df, my.legend, my.palette)
+    my.write(my.plot, file.path(my.dest, "binary_rank"),
+             paste(my.title, "Binary Rank"), tall=TRUE)
+    
+    my.plot <- plot_pattern_rank(my.df, my.legend, my.palette)
+    my.write(my.plot, file.path(my.dest, "pattern_rank"),
+             paste(my.title, "Pattern Rank"), tall=TRUE)
+    
+    my.plot <- plot_iteration(my.df, my.legend, my.palette)
     my.write(my.plot, file.path(my.dest, "iteration"),
-             paste(my.title, "Iteration", tall=TRUE))
+             paste(my.title, "Iteration"), tall=TRUE)
 
-    my.plot <- plot_connectivity(my.df, my.legend)
+    my.plot <- plot_connectivity(my.df, my.legend, my.palette)
     my.write(my.plot, file.path(my.dest, "connectivity"),
-             paste(my.title, "Connectivity", tall=TRUE))
+             paste(my.title, "Connectivity"), tall=TRUE)
 
-    my.plot <- plot_initial_connectivity(my.df, my.legend)
+    my.plot <- plot_initial_connectivity(my.df, my.legend, my.palette)
     my.write(my.plot, file.path(my.dest, "initial_connectivity"),
-             paste(my.title, "Initial Connectivity", tall=TRUE))
+             paste(my.title, "Initial Connectivity"), tall=TRUE)
 
-    my.plot <- plot_spectral_modularity(my.df, my.legend)
+    my.plot <- plot_spectral_modularity(my.df, my.legend, my.palette)
     my.write(my.plot, file.path(my.dest, "spectral_modularity"),
-             paste(my.title, "Spectral Modularity", tall=TRUE))
+             paste(my.title, "Spectral Modularity"), tall=TRUE)
 
-    my.plot <- plot_louvain_modularity(my.df, my.legend)
+    my.plot <- plot_louvain_modularity(my.df, my.legend, my.palette)
     my.write(my.plot, file.path(my.dest, "louvain_modularity"),
-             paste(my.title, "Louvain Modularity", tall=TRUE))
+             paste(my.title, "Louvain Modularity"), tall=TRUE)
 
-    my.plot <- plot_degree_correlation(my.df, my.legend)
+    my.plot <- plot_degree_correlation(my.df, my.legend, my.palette)
     my.write(my.plot, file.path(my.dest, "degree_correlation"),
-             paste(my.title, "Degree Correlation", tall=TRUE))
+             paste(my.title, "Degree Correlation"), tall=TRUE)
 
-    my.plot <- plot_average_shortest_path(my.df, my.legend)
+    my.plot <- plot_average_shortest_path(my.df, my.legend, my.palette)
     my.write(my.plot, file.path(my.dest, "average_shortest_path"),
-             paste(my.title, "Average Shortest Path", tall=TRUE))
+             paste(my.title, "Average Shortest Path"), tall=TRUE)
 
-    my.plot <- plot_zscore(my.df, my.legend, "mtf_7", "Z-Score Triad 7")
+    my.plot <- plot_zscore(my.df, my.legend, "mtf_7", "Z-Score Triad 7", my.palette)
     my.write(my.plot, file.path(my.dest, "zscore_triad_7"),
-             paste(my.title, "Z-Score Triad 7", tall=TRUE))
+             paste(my.title, "Z-Score Triad 7"), tall=TRUE)
     # scatter plots
-    my.plot <- plot_variance_vs_connectivity(my.df, my.legend)
+    my.plot <- plot_variance_vs_connectivity(my.df, my.legend, my.palette,
+                                             my.shapes, my.a=1/5)
     my.write(my.plot, file.path(my.dest, "variance_vs_connectivity"),
-             paste(my.title, "Pattern Variance vs Connectivity", tall=TRUE))
+             paste(my.title, "Pattern Variance vs Connectivity"), tall=TRUE)
 
-    my.plot <- plot_binary_vs_overlap(my.df, my.legend)
+    my.plot <- plot_binary_vs_overlap(my.df, my.legend, my.palette, my.shapes,
+                                      my.a=1/5)
     my.write(my.plot, file.path(my.dest, "binary_vs_overlap"),
-             paste(my.title, "Binary Complexity vs Overlap", tall=TRUE))
+             paste(my.title, "Binary Complexity vs Overlap"), tall=TRUE)
 
-    my.plot <- plot_binary_vs_spectral(my.df, my.legend)
+    my.plot <- plot_binary_vs_spectral(my.df, my.legend, my.palette, my.shapes,
+                                       my.a=1/5)
     my.write(my.plot, file.path(my.dest, "binary_vs_spectral"),
-             paste(my.title, "Binary Complexity vs Modularity", tall=TRUE))
+             paste(my.title, "Binary Complexity vs Modularity"), tall=TRUE)
 
-    my.plot <- plot_scalar_vs_overlap(my.df, my.legend)
+    my.plot <- plot_scalar_vs_overlap(my.df, my.legend, my.palette, my.shapes,
+                                      my.a=1/5)
     my.write(my.plot, file.path(my.dest, "scalar_vs_overlap"),
-             paste(my.title, "Scalar Complexity vs Overlap", tall=TRUE))
+             paste(my.title, "Scalar Complexity vs Overlap"), tall=TRUE)
 
-    my.plot <- plot_scalar_vs_spectral(my.df, my.legend)
+    my.plot <- plot_scalar_vs_spectral(my.df, my.legend, my.palette, my.shapes,
+                                       my.a=1/5)
     my.write(my.plot, file.path(my.dest, "scalar_vs_spectral"),
-             paste(my.title, "Scalar Complexity vs Modularity", tall=TRUE))
+             paste(my.title, "Scalar Complexity vs Modularity"), tall=TRUE)
 
-    my.plot <- plot_scalar_vs_spectral(my.df, my.legend)
-    my.write(my.plot, file.path(my.dest, "scalar_vs_spectral"),
-             paste(my.title, "Scalar Complexity vs Modularity", tall=TRUE))
-
-    my.plot <- plot_scalar_vs_degree_corr(my.df, my.legend)
+    my.plot <- plot_scalar_vs_degree_corr(my.df, my.legend, my.palette, my.shapes,
+                                          my.a=1/5)
     my.write(my.plot, file.path(my.dest, "scalar_vs_degree"),
-             paste(my.title, "Scalar Complexity vs Degree Correlation", tall=TRUE))
+             paste(my.title, "Scalar Complexity vs Degree Correlation"), tall=TRUE)
 
-    my.plot <- plot_scalar_vs_zscore(my.df, my.legend, "mtf_7", "Z-Score Triad 7")
+    my.plot <- plot_scalar_vs_zscore(my.df, my.legend, "mtf_7", "Z-Score Triad 7",
+                                     my.palette, my.shapes, my.a=1/5)
     my.write(my.plot, file.path(my.dest, "scalar_vs_zscore_triad_7"),
-             paste(my.title, "Scalar Complexity vs Z-Score Triad 7", tall=TRUE))
+             paste(my.title, "Scalar Complexity vs Z-Score Triad 7"), tall=TRUE)
+    
+    my.plot <- plot_variance_vs_spectral(my.df, my.legend, my.palette, my.shapes,
+                                         my.a=1/5)
+    my.write(my.plot, file.path(my.dest, "variance_vs_spectral"),
+             paste(my.title, "Pattern Variance vs Modularity"), tall=TRUE)
 
-    my.plot <- plot_spectral_vs_zscore(my.df, my.legend, "mtf_7", "Z-Score Triad 7")
+    my.plot <- plot_binary_rank_vs_spectral(my.df, my.legend, my.palette,
+                                            my.shapes, my.a=1/5)
+    my.write(my.plot, file.path(my.dest, "binary_rank_vs_spectral"),
+             paste(my.title, "Binary Rank vs Modularity"), tall=TRUE)
+    
+    my.plot <- plot_pattern_rank_vs_spectral(my.df, my.legend, my.palette,
+                                             my.shapes, my.a=1/5)
+    my.write(my.plot, file.path(my.dest, "pattern_rank_vs_spectral"),
+             paste(my.title, "Pattern Rank vs Modularity"), tall=TRUE)
+    
+    my.plot <- plot_spectral_vs_zscore(my.df, my.legend, "mtf_7", "Z-Score Triad 7",
+                                       my.palette, my.shapes, my.a=1/5)
     my.write(my.plot, file.path(my.dest, "spectral_vs_zscore_triad_7"),
-             paste(my.title, "Modularity vs Z-Score Triad 7", tall=TRUE))
+             paste(my.title, "Modularity vs Z-Score Triad 7"), tall=TRUE)
 
-    my.plot <- plot_spectral_vs_overlap(my.df, my.legend)
+    my.plot <- plot_spectral_vs_overlap(my.df, my.legend, my.palette, my.shapes,
+                                        my.a=1/5)
     my.write(my.plot, file.path(my.dest, "spectral_vs_overlap"),
-             paste(my.title, "Modularity vs Overlap", tall=TRUE))
+             paste(my.title, "Modularity vs Overlap"), tall=TRUE)
 
-    my.plot <- plot_spectral_vs_degree_corr(my.df, my.legend)
+    my.plot <- plot_spectral_vs_degree_corr(my.df, my.legend, my.palette,
+                                            my.shapes, my.a=1/5)
     my.write(my.plot, file.path(my.dest, "spectral_vs_degree"),
-             paste(my.title, "Modularity vs Degree Correlation", tall=TRUE))
+             paste(my.title, "Modularity vs Degree Correlation"), tall=TRUE)
 
 #    # tsps
 #    pdf(file.path(my.dest, "tsps.pdf"),
@@ -356,10 +399,36 @@ plot_variance <- function(my.df, my.legend, my.palette, binw=0.01, my.a=1)
     cat("variance\n")
     cat(paste("\tbinwidth =", binw, "\n"))
     cat(paste("\talpha =", my.a, "\n"))
-    tmp <- probability_distributions(my.df, c("setup", "type"), "variance", binw)
+    tmp <- probability_distributions(my.df, c("setup", "type"), "pattern_variance", binw)
     my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
-    my.plot <- layout_distribution(my.plot, expression(paste("Pattern Variance ", sigma^2)),
-                                 expression(paste(PMF(sigma^2))), my.legend, my.a, my.palette)
+    my.plot <- layout_distribution(my.plot, expression(paste("Pattern Variance ", sigma^2[Q])),
+                                 expression(paste(PMF(sigma^2[Q]))), my.legend, my.a, my.palette)
+    my.plot <- my.plot + facet_grid("type ~ .")
+    return(my.plot)
+}
+
+plot_binary_rank <- function(my.df, my.legend, my.palette, binw=0.1, my.a=1)
+{
+    cat("binary rank\n")
+    cat(paste("\tbinwidth =", binw, "\n"))
+    cat(paste("\talpha =", my.a, "\n"))
+    tmp <- probability_distributions(my.df, c("setup", "type"), "binary_rank", binw)
+    my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
+    my.plot <- layout_distribution(my.plot, expression(paste("Binary Rank ", R[b])),
+                                   expression(paste(PMF(R[b]))), my.legend, my.a, my.palette)
+    my.plot <- my.plot + facet_grid("type ~ .")
+    return(my.plot)
+}
+
+plot_pattern_rank <- function(my.df, my.legend, my.palette, binw=0.1, my.a=1)
+{
+    cat("binary rank\n")
+    cat(paste("\tbinwidth =", binw, "\n"))
+    cat(paste("\talpha =", my.a, "\n"))
+    tmp <- probability_distributions(my.df, c("setup", "type"), "pattern_rank", binw)
+    my.plot <- ggplot(tmp, aes(x=x, y=y, colour=setup, linetype=setup))
+    my.plot <- layout_distribution(my.plot, expression(paste("Pattern Rank ", R[Q])),
+                                   expression(paste(PMF(R[Q]))), my.legend, my.a, my.palette)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
@@ -530,7 +599,7 @@ plot_variance_vs_connectivity <- function(my.df, my.legend, my.palette, my.shape
 {
     cat("variance vs density\n")
     cat(paste("\talpha =", my.a, "\n"))
-    my.plot <- ggplot(my.df, aes(x=variance, y=density,
+    my.plot <- ggplot(my.df, aes(x=pattern_variance, y=density,
                                  colour=setup, linetype=setup))
     my.plot <- layout_scatter(my.plot,
                               expression(paste("Pattern Variance ", sigma^2)),
@@ -555,7 +624,7 @@ plot_binary_vs_overlap <- function(my.df, my.legend, my.palette, my.shapes, my.a
 
 plot_binary_vs_spectral <- function(my.df, my.legend, my.palette, my.shapes, my.a=1)
 {
-    cat("complexity vs modularity\n")
+    cat("binary vs modularity\n")
     cat(paste("\talpha =", my.a, "\n"))
     my.plot <- ggplot(my.df, aes(x=binary_complexity, y=spectral_modularity,
                                  colour=setup))
@@ -619,6 +688,65 @@ plot_scalar_vs_zscore <- function(my.df, my.legend, mtf, label, my.palette, my.s
                               label,
                               expression(paste("Scalar Complexity ", italic(C))),
                               my.legend, my.a, my.palette, my.shapes)
+    my.plot <- my.plot + facet_grid("type ~ .")
+    return(my.plot)
+}
+
+plot_variance_vs_spectral <- function(my.df, my.legend, my.palette, my.shapes, my.a=1, my.p_sz=1.5)
+{
+    cat("variance vs modularity\n")
+    cat(paste("\talpha =", my.a, "\n"))
+    my.plot <- ggplot(my.df, aes(x=pattern_variance, y=spectral_modularity,
+                                 colour=setup, linetype=setup, shape=setup))
+    my.plot <- layout_scatter(my.plot,
+                              expression(paste("Pattern Variance ", sigma^2)),
+                              expression(paste("Modularity ", italic(Q))),
+                              my.legend, my.a, my.palette, my.shapes, my.p_sz=my.p_sz)
+    my.plot <- my.plot + facet_grid("type ~ .")
+    return(my.plot)
+}
+
+plot_binary_rank_vs_spectral <- function(my.df, my.legend, my.palette, my.shapes,
+                                         my.a=1, my.p_sz=1.5)
+{
+    cat("binary rank vs modularity\n")
+    cat(paste("\talpha =", my.a, "\n"))
+    my.plot <- ggplot(my.df, aes(x=binary_rank, y=spectral_modularity,
+                                 colour=setup, linetype=setup, shape=setup))
+    my.plot <- layout_scatter(my.plot,
+                              expression(paste("Binary Rank ", R[b])),
+                              expression(paste("Modularity ", italic(Q))),
+                              my.legend, my.a, my.palette, my.shapes, my.p_sz=my.p_sz)
+    my.plot <- my.plot + facet_grid("type ~ .")
+    return(my.plot)
+}
+
+plot_binary_rank_vs_overlap <- function(my.df, my.legend, my.palette, my.shapes,
+                                         my.a=1, my.p_sz=1.5)
+{
+    cat("binary rank vs overlap\n")
+    cat(paste("\talpha =", my.a, "\n"))
+    my.plot <- ggplot(my.df, aes(x=binary_rank, y=mean_overlap,
+                                 colour=setup, linetype=setup, shape=setup))
+    my.plot <- layout_scatter(my.plot,
+                              expression(paste("Binary Rank ", R[b])),
+                              expression(paste("Overlap ", italic(O))),
+                              my.legend, my.a, my.palette, my.shapes, my.p_sz=my.p_sz)
+    my.plot <- my.plot + facet_grid("type ~ .")
+    return(my.plot)
+}
+
+plot_pattern_rank_vs_spectral <- function(my.df, my.legend, my.palette, my.shapes,
+                                  my.a=1, my.p_sz=1.5)
+{
+    cat("pattern rank vs modularity\n")
+    cat(paste("\talpha =", my.a, "\n"))
+    my.plot <- ggplot(my.df, aes(x=pattern_rank, y=spectral_modularity,
+                                 colour=setup, linetype=setup, shape=setup))
+    my.plot <- layout_scatter(my.plot,
+                              expression(paste("Pattern Rank ", R[Q])),
+                              expression(paste("Modularity ", italic(Q))),
+                              my.legend, my.a, my.palette, my.shapes, my.p_sz=my.p_sz)
     my.plot <- my.plot + facet_grid("type ~ .")
     return(my.plot)
 }
@@ -771,7 +899,7 @@ plot_publication <- function(my.path, my.write=write_epjb_figure)
     my.plot <- my.plot + geom_smooth(method="lm") + scale_linetype(name=my.legend)
     print(my.plot)
 #     my.write(my.plot, file.path(my.dest, "scalar_vs_spectral"),
-#              paste(my.title, "Scalar Complexity vs Modularity", tall=TRUE))
+#              paste(my.title, "Scalar Complexity vs Modularity"), tall=TRUE)
 }
 
 plot_figure_overlap <- function(my.legend="Setup", my.a=1)

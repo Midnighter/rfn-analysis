@@ -22,36 +22,12 @@ reorder_setups <- function(my.df)
     return(my.df)
 }
 
-inverse_complexity <- function(my.df)
-{
-    my.df <- transform(my.df, scalar_complexity=1 / scalar_complexity,
-                       binary_complexity=1 / binary_complexity)
-    return(my.df)
-}
-
 reorder_complexity <- function(my.df)
 {
     tmp <- ddply(my.df, .(setup), colwise(unique, "scalar_complexity"))
     levels(my.df$setup) <- sprintf("%3.1f", round(tmp$scalar_complexity, digits=1))
     my.df$setup <- factor(my.df$setup, levels=c("2.2", "4.0", "9.3", "12.9"))
     return(my.df)
-}
-
-rescale_binary <- function(my.df)
-{
-    return(ddply(my.df, .(setup), function(x) {
-            if (unique(x$setup) == "2 Activated") {
-                x$binary_complexity <- x$binary_complexity / 2
-            }
-            else if (unique(x$setup) == "6 Activated") {
-                x$binary_complexity <- x$binary_complexity / 6
-            }
-            else {
-                x$binary_complexity <- x$binary_complexity / 4
-            }
-            x
-        })
-    )
 }
 
 load_setups <- function(my.path)
@@ -75,14 +51,10 @@ load_artificial <- function(my.path)
     # phase 1 complexity data
     tmp <- h5read(my.h5, "/complexity/phase_1")
     tmp <- prepare_factors(tmp)
-    # inverse of complexity only necessary for old files
-    tmp <- inverse_complexity(tmp)
     my.comp.p1 <<- reorder_complexity(tmp)
     # phase 2 complexity data
     tmp <- h5read(my.h5, "/complexity/phase_1")
     tmp <- prepare_factors(tmp)
-    # inverse of complexity only necessary for old files
-    tmp <- inverse_complexity(tmp)
     my.comp.p2 <<- reorder_complexity(tmp)
     H5Fclose(my.h5)
     return()
@@ -101,110 +73,79 @@ load_all <- function(my.path)
 
 linear_model <- function(my.df, my.formula)
 {
-    cat(paste("\n", unique(my.df$type), "\n"))
-    cat(paste(unique(my.df$setup), "\n", "\n"))
+    my.formula <- as.formula(my.formula)
     my.mod <- lm(my.formula, data=my.df)
-    print(summary(my.mod))
-    par(mfrow=c(2, 2))
-    plot(my.mod)
-    par(mfrow=c(1, 1))
-    return(data.frame(mod=my.mod, setup=unique(my.df$setup),
-                      type=unique(my.df$type)))
+    my.sum <- summary(my.mod)
+    my.res <- as.data.frame(coefficients(my.sum))
+#     par(mfrow=c(2, 2))
+#     plot(my.mod)
+#     par(mfrow=c(1, 1))
+    my.res$vars <- rownames(my.res)
+    return(my.res)
 }
 
 coefficient_agreement <- function(my.ct)
 {
     my.N <- sum(my.ct)
-    my.p0 <- sum(diag(my.ct))
+    my.f.0 <- sum(diag(my.ct))
     my.rsums <- margin.table(my.ct, 1)
     my.csums <- margin.table(my.ct, 2)
-    my.pc <- sum(my.rsums * my.csums) / my.N
-    my.min.marg <- numeric(length(my.rsums))
-    for (j in 1:length(my.min.marg)) {
+    my.f.c <- sum(my.rsums * my.csums) / my.N
+    my.l <- length(my.rsums)
+    my.min.marg <- numeric(my.l)
+    for (j in 1:my.l) {
         my.min.marg[j] <- min(my.rsums[j], my.csums[j])
     }
-    my.p.max <- sum(my.min.marg)
-    cat(paste("p0 = ", my.p0, "\n"))
-    cat(paste("pc = ", my.pc, "\n"))
-    cat(paste("pM = ", my.p.max, "\n"))
-    my.kappa <- (my.p0 - my.pc) / (1 - my.pc)
-    cat(paste("kappa = ", my.kappa, "\n"))
-    my.kappa.max <- (my.p.max - my.pc) / (1 - my.pc)
-    cat(paste("kappa max = ", my.kappa.max, "\n"))
-    return()
+    my.f.max <- sum(my.min.marg)
+    my.res <- data.frame(p.0=my.f.0 / my.N,
+                         p.c=my.f.c / my.N,
+                         p.max=my.f.max / my.N,
+                         kappa=(my.f.0 - my.f.c) / (my.N - my.f.c),
+                         kappa.max=(my.f.max - my.f.c) / (my.N - my.f.c),
+                         sigma.kappa=sqrt(my.f.0 * (1 - my.f.0 / my.N)) / (my.N - my.f.c),
+                         sigma.kappa.0=sqrt(my.f.c / (my.N * (my.N - my.f.c)))
+                         )
+    return(my.res)
 }
 
-linear_discriminant_analysis <- function(my.df, my.frmla="type ~ mean_overlap")
+discriminant <- function(my.df, my.formula)
 {
-    my.frm <- formula(my.frmla)
-    my.base <- subset(my.df, type %in% c("Node Robust", "Noise Robust"))
-    my.base$type <- factor(my.base$type)
-    my.lev <- levels(my.base$setup)
-    my.len <- length(my.lev)
-    my.p0 <- numeric(my.len)
-    my.pc <- numeric(my.len)
-    my.k <- numeric(my.len)
-    my.k.max <- numeric(my.len)
-    my.par <- rep("c", my.len)
-#     for (my.set in levels(my.base$setup)) {
-    for (i in 1:my.len) {
-        my.set <- my.lev[i]
-#         cat(paste("\n\n", my.set, "\n", sep=""))
-        tmp <- subset(my.base, setup == my.set)
-        tmp$setup <- factor(tmp$setup)
-#         cat("t.test")
-        my1 <- subset(tmp, type == "Node Robust")
-        my2 <- subset(tmp, type == "Noise Robust")
-#         my.t <- t.test(my1$mean_overlap, my2$mean_overlap)
-#         print(my.t)
-#         cat("lda\n")
-        if (nrow(my1) < 2 | nrow(my2) < 2) {
-            my.p0[i] <- NA
-            my.pc[i] <- NA
-            my.k[i] <- NA
-            my.k.max[i] <- NA
-            my.par[i] <- my.set
-            next
+    my.formula <- as.formula(my.formula)
+    # hackish way of getting the response variable
+    my.resp <- all.vars(my.formula)[1]
+    my.df[[my.resp]] <- factor(my.df[[my.resp]])
+    my.disc <- my.df[[my.resp]]
+    for (my.lev in my.disc) {
+        if (sum(as.integer(my.disc == my.lev)) < 2) {
+            return(data.frame(p.0=NA,
+                              p.c=NA,
+                              p.max=NA,
+                              kappa=NA,
+                              kappa.max=NA,
+                              sigma.kappa=NA,
+                              sigma.kappa.0=NA)
+            )
         }
-        my.lda <- lda(my.frm, data=tmp, method="mle")
-#         print(plot(my.lda))
-        my.pred <- predict(my.lda)
-#         print(my.lda)
-#         print(my.lda$svd)
-        my.ct <- table(tmp$type, my.pred$class)
-        # elements are normed by total sum of elements
-        my.N <- sum(my.ct)
-        # sum of diagonal of matrix
-        my.f.agree <- sum(diag(my.ct))
-        # chance agreement is based on association of marginals
-        my.rsums <- margin.table(my.ct, 1)
-        my.csums <- margin.table(my.ct, 2)
-        my.f.chance <- sum(my.rsums * my.csums) / my.N
-        my.min.marg <- numeric(length(my.rsums))
-        for (j in 1:length(my.min.marg)) {
-            my.min.marg[j] <- min(my.rsums[j], my.csums[j])
-        }
-        my.f.max <- sum(my.min.marg)
-        my.p0[i] <- my.f.agree / my.N
-        my.pc[i] <- my.f.chance / my.N
-        my.k[i] <- (my.f.agree - my.f.chance) / (my.N - my.f.chance)
-        my.k.max[i] <- (my.f.max - my.f.chance) / (my.N - my.f.chance)
-        my.par[i] <- my.set
-#         my.lda <- lda(my.frm, data=tmp, CV=T, method="mve")
-#         ct <- table(tmp$type, my.lda$class)
-#         diag(prop.table(ct, 1))
-        # total percent correct
-#         cat(sum(diag(prop.table(ct))))
-#         print("qda")
-#         my.qda <- qda(type ~ spectral_modularity + mean_overlap, data=tmp)
-#         my.pred <- predict(my.qda)
-#         print(table(tmp$type, my.pred$class))
-#         my.qda <- qda(type ~ spectral_modularity + mean_overlap, data=tmp, CV=T)
-#         ct <- table(tmp$type, my.qda$class)
-#         diag(prop.table(ct, 1))
-#         # total percent correct
-#         print(sum(diag(prop.table(ct))))
     }
-    return(data.frame(P0=my.p0, Pc=my.pc, kappa=my.k, kappa_max=my.k.max,
-                      setup=my.par))
+    # lda here could be replaced with another type of analysis
+    my.lda <- lda(my.formula, data=my.df, method="mle")
+    my.pred <- predict(my.lda)
+    my.ct <- table(my.df[[my.resp]], my.pred$class)
+    return(coefficient_agreement(my.ct))
+}
+
+differentiate_node_noise <- function(my.df, my.frmla="type ~ mean_overlap")
+{
+    tmp <- subset(my.df, type %in% c("Node Robust", "Noise Robust"))
+    tmp$type <- factor(tmp$type)
+    return(do_analysis_by_setup(tmp, discriminant, my.frmla))
+}
+
+do_analysis_by_setup <- function(my.df, my.func, my.formula)
+{
+    return(ddply(my.df, .(setup), function(x) {
+        my.res <- my.func(x, my.formula)
+        my.res$setup <- unique(x$setup)
+        return(my.res)
+    }))
 }

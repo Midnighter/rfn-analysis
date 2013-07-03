@@ -398,7 +398,6 @@ class RobustFunctionalNetwork(nx.DiGraph):
                         binary_matrix[:, i],\
                         binary_matrix[:, j])
         # normalise by the number of vectors products, i.e.,
-        # nodes_in * (nodes_in - 1) / 2
         norm = float(self.parameters.nodes_in *\
                 (self.parameters.nodes_in - 1)) / 2.0
         self.scalar_complexity /= norm
@@ -413,6 +412,7 @@ class RobustFunctionalNetwork(nx.DiGraph):
         self.pattern_variance = numpy.sqrt(numpy.power(
             numpy.reciprocal(self.parameters.activated_k) -\
             self.ideal_pattern[self.ideal_pattern > 0], 2.0).sum())
+        self.pattern_variance /= float(self.parameters.nodes_in)
 
     def draw_modules(self, filename, previous=None, spectral_partition=False, louvain_partition=False):
         """
@@ -424,9 +424,6 @@ class RobustFunctionalNetwork(nx.DiGraph):
             return
         # colours for partitions
         if spectral_partition or louvain_partition:
-            # rainbow palette
-#            colour_vec = ["#FF0000FF", "#FFBF00FF", "#80FF00FF", "#00FF40FF",
-#                    "#00FFFFFF", "#0040FFFF", "#8000FFFF"]
             # brewer palette
             colour_vec = ["#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00",
                     "#FFFF33", "#A65628", "#F781BF", "#999999"]

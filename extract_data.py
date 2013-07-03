@@ -60,6 +60,7 @@ class NetworkStats(tables.IsDescription):
     mean_overlap         = tables.Float64Col()
     pattern_variance     = tables.Float64Col()
     pattern_rank         = tables.Float64Col()
+    binary_rank          = tables.Float64Col()
     shortest_paths       = tables.Float64Col()
     name                 = tables.StringCol(22)
     type                 = tables.StringCol(12)
