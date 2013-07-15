@@ -1,6 +1,7 @@
 
 library(rhdf5)
 library(plyr)
+library(reshape2)
 library(MASS)
 
 
@@ -30,6 +31,18 @@ reorder_complexity <- function(my.df)
     return(my.df)
 }
 
+add_label <- function(my.df, my.var, my.label)
+{
+    # add new label column to data frame
+    if (is.numeric(my.label)) {
+        my.df[[my.var]] <- rep(my.label, nrow(my.df))
+    }
+    else if (is.character(my.label)) {
+        my.df[[my.var]] <- factor(rep(0, nrow(my.df)), labels=my.label)
+    }
+    my.df
+}
+
 load_setups <- function(my.path)
 {
     my.h5 <- H5Fopen(my.path)
@@ -53,7 +66,7 @@ load_artificial <- function(my.path)
     tmp <- prepare_factors(tmp)
     my.comp.p1 <<- reorder_complexity(tmp)
     # phase 2 complexity data
-    tmp <- h5read(my.h5, "/complexity/phase_1")
+    tmp <- h5read(my.h5, "/complexity/phase_2")
     tmp <- prepare_factors(tmp)
     my.comp.p2 <<- reorder_complexity(tmp)
     H5Fclose(my.h5)
@@ -67,13 +80,25 @@ load_all <- function(my.path)
     return()
 }
 
+load_tsps <- function(my.df, my.sep=c("type", "setup"))
+{
+    tmp <- my.df[, c(grep("mtf", colnames(my.df), value=TRUE), my.sep)]
+    tmp <- melt(tmp, id.vars=my.sep, variable.name="triad",
+                value.name="score")
+    tmp <- tmp[is.finite(tmp$score),]
+    my.res <- ddply(tmp, c(my.sep, "triad"), summarise,
+                    zscore=mean(score, na.rm=TRUE),
+                    error=sd(score, na.rm=TRUE))
+    return(my.res)
+}
+
 
 # Group Prediction --------------------------------------------------------
 
 
 linear_model <- function(my.df, my.formula)
 {
-    my.formula <- as.formula(my.formula)
+    my.formula <- formula(my.formula)
     my.mod <- lm(my.formula, data=my.df)
     my.sum <- summary(my.mod)
     my.res <- as.data.frame(coefficients(my.sum))
@@ -81,6 +106,35 @@ linear_model <- function(my.df, my.formula)
 #     plot(my.mod)
 #     par(mfrow=c(1, 1))
     my.res$vars <- rownames(my.res)
+    return(my.res)
+}
+
+correlation <- function(my.df, my.formula)
+{
+    my.formula <- formula(my.formula)
+    my.cor <- cor.test(my.formula, data=my.df, method="pearson",
+                       conf.level=0.95)
+    # compute standard error from 95% confidence interval
+    my.se <- (my.cor$conf.int[2] - my.cor$estimate) / 1.96
+    my.res <- data.frame(t.statistic=my.cor$statistic,
+                         correlation=my.cor$estimate,
+                         standard.error=my.se,
+                         p.value=my.cor$p.value)
+    return(my.res)
+}
+
+shift <- function(my.df, my.formula)
+{
+    my.formula <- formula(my.formula)
+    my.test <- t.test(my.formula, data=my.df)
+#     print(my.test)
+    my.shift <- abs(my.test$estimate[1] - my.test$estimate[2])
+    # compute standard error from 95% confidence interval
+    my.se <- (max(abs(my.test$conf.int)) - my.shift) / 1.96
+    my.res <- data.frame(t.statistic=my.test$statistic,
+                         shift=my.shift,
+                         standard.error=my.se,
+                         p.value=my.test$p.value)
     return(my.res)
 }
 
@@ -110,13 +164,12 @@ coefficient_agreement <- function(my.ct)
 
 discriminant <- function(my.df, my.formula)
 {
-    my.formula <- as.formula(my.formula)
+    my.formula <- formula(my.formula)
     # hackish way of getting the response variable
     my.resp <- all.vars(my.formula)[1]
-    my.df[[my.resp]] <- factor(my.df[[my.resp]])
-    my.disc <- my.df[[my.resp]]
+    my.disc <- levels(my.df[[my.resp]])
     for (my.lev in my.disc) {
-        if (sum(as.integer(my.disc == my.lev)) < 2) {
+        if (sum(as.integer(my.df[[my.resp]] == my.lev)) < 2) {
             return(data.frame(p.0=NA,
                               p.c=NA,
                               p.max=NA,
@@ -129,23 +182,7 @@ discriminant <- function(my.df, my.formula)
     }
     # lda here could be replaced with another type of analysis
     my.lda <- lda(my.formula, data=my.df, method="mle")
-    my.pred <- predict(my.lda)
+    my.pred <- predict(my.lda, newdata=my.df)
     my.ct <- table(my.df[[my.resp]], my.pred$class)
     return(coefficient_agreement(my.ct))
-}
-
-differentiate_node_noise <- function(my.df, my.frmla="type ~ mean_overlap")
-{
-    tmp <- subset(my.df, type %in% c("Node Robust", "Noise Robust"))
-    tmp$type <- factor(tmp$type)
-    return(do_analysis_by_setup(tmp, discriminant, my.frmla))
-}
-
-do_analysis_by_setup <- function(my.df, my.func, my.formula)
-{
-    return(ddply(my.df, .(setup), function(x) {
-        my.res <- my.func(x, my.formula)
-        my.res$setup <- unique(x$setup)
-        return(my.res)
-    }))
 }

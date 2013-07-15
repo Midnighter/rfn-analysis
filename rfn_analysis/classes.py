@@ -429,7 +429,7 @@ class RobustFunctionalNetwork(nx.DiGraph):
                     "#FFFF33", "#A65628", "#F781BF", "#999999"]
         if previous:
             # only update
-            net = pgv.AGraph(previous, name=filename)
+            net = pgv.AGraph(previous, name=filename, size="8.27, 8.27")
             net.has_layout = True
             for node in self.nodes_iter():
                 if spectral_partition:
@@ -444,10 +444,15 @@ class RobustFunctionalNetwork(nx.DiGraph):
             net.draw(filename)
             return net.to_string()
         else:
-            net = pgv.AGraph(directed=True, name=filename, strict=True)
+            # A4 paper width in inches
+            net = pgv.AGraph(directed=True, name=filename, rankdir="TB",
+                    strict=True, size="8.27, 8.27")
         node_attr = dict()
         node_attr["style"] = "filled"
         link_attr = dict()
+        input_layer = list()
+        middle_layer = list()
+        output_layer = list()
         # add compound nodes
         for node in self.nodes_iter():
             if spectral_partition:
@@ -459,12 +464,16 @@ class RobustFunctionalNetwork(nx.DiGraph):
             if self.parameters.is_input(node):
                 label = "I %d" % node
                 shape = "invtriangle"
+                input_layer.append(node)
             elif self.parameters.is_middle(node):
                 label = "M %d" % node
                 shape = "circle"
+                middle_layer.append(node)
             else:
                 label = "O %d" % node
                 shape = "triangle"
+                output_layer.append(node)
+            label = ""
             if spectral_partition or louvain_partition:
                 net.add_node(node, label=label, fillcolor=colour, shape=shape, **node_attr)
             else:
@@ -472,6 +481,12 @@ class RobustFunctionalNetwork(nx.DiGraph):
         # add links
         for (u, v) in self.edges_iter():
             net.add_edge(u, v, **link_attr)
+        # layers defined by subgraphs
+        sub_attr = dict()
+        net.add_subgraph(input_layer, name="input", rank="source", **sub_attr)
+        net.add_subgraph(middle_layer, name="middle", **sub_attr)
+        net.add_subgraph(output_layer, name="output", rank="sink", **sub_attr)
+        # draw
         net.layout(prog="dot", args="")
         net.draw(filename)
         return net.to_string()
@@ -491,11 +506,11 @@ class RobustFunctionalNetwork(nx.DiGraph):
         if previous:
             # only update
             pass
-            net = pgv.AGraph(previous, name=filename)
+            net = pgv.AGraph(previous, name=filename, size="8.27, 8.27")
 #            net.has_layout = True
         else:
             net = pgv.AGraph(directed=True, name=filename, strict=True,
-                    rankdir="TB")
+                    rankdir="TB", size="8.27, 8.27")
         node_attr = dict()
         node_attr["style"] = "filled"
         link_attr = dict()
@@ -520,7 +535,8 @@ class RobustFunctionalNetwork(nx.DiGraph):
                 colour = colour_vec[2]
                 output_layer.append(node)
 #            net.add_node(node, label=label, fillcolor=colour, shape=shape, **node_attr)
-            net.add_node(node, label="", fillcolor=colour, shape=shape, **node_attr)
+            label = ""
+            net.add_node(node, label=label, fillcolor=colour, shape=shape, **node_attr)
         # add links
         for (u, v) in self.edges_iter():
             net.add_edge(u, v, **link_attr)
